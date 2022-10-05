@@ -1,6 +1,6 @@
 import boto3
 
-
+#Creating one single ec2 instance of the type t2.micro
 
 def create_ec2_instance():
     print("creating instance")

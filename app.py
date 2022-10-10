@@ -1,6 +1,7 @@
 from flask import Flask
 app = Flask(__name__)
+f = open("id", "r")
 
 @app.route('/')
 def my_app():
-    return 'First Flask application!'
+    return 'Welcome to Instance no.' + f.read()

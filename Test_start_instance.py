@@ -12,7 +12,7 @@ for i in range(9):
 
     #instanceType = 't2.micro'
     def create_ec2_instance():
-        print("creating instance")
+        print("creating instance, type: " + instanceType + " no." + str(i))
         instance_ec2.run_instances(
             ImageId = "ami-08c40ec9ead489470",
             MinCount = 1,

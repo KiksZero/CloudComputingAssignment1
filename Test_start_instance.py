@@ -15,15 +15,12 @@ for i in range(9):
         instanceType = 'm4.large'
 
     #instanceType = 't2.micro'
-    def create_ec2_instance():
-        print("creating instance, type: " + instanceType + " no." + str(i))
-        instance_ec2.run_instances(
-            ImageId = imageId,
-            MinCount = 1,
-            MaxCount = 1,
-            InstanceType = instanceType,
-            KeyName = keyName,
-            UserData = initScript.replace('$INSTANCE_ID', str(i))
-             )
-
-    create_ec2_instance()
+    print("creating instance, type: " + instanceType + " no." + str(i))
+    instance_ec2.run_instances(
+        ImageId = imageId,
+        MinCount = 1,
+        MaxCount = 1,
+        InstanceType = instanceType,
+        KeyName = keyName,
+        UserData = initScript.replace('$INSTANCE_ID', str(i))
+        )

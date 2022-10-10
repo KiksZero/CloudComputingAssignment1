@@ -7,6 +7,15 @@ keyName = 'vockey'
 instance_ec2 =  boto3.client("ec2")
 with open('init.sh', 'r') as file:
     initScript = file.read()
+ec2_resource = boto3.resource("ec2")
+#Creating a VPC for our cidrblock on AWS
+vpc = ec2_resource.create_vpc(CidrBlock='172.31.0.0/16')
+vpc.wait_until_available()
+instance_ec2.modify_vpc_attribute( VpcId = vpc.id , EnableDnsSupport = { 'Value': True } )
+instance_ec2.modify_vpc_attribute( VpcId = vpc.id , EnableDnsHostnames = { 'Value': True } )
+#Creating a security group that only allows HTTP
+securitygroup = ec2_resource.create_security_group(GroupName='HTTP-ONLY', Description='only allow HTTP traffic', VpcId=vpc.id)
+securitygroup.authorize_ingress(CidrIp='0.0.0.0/0', IpProtocol='tcp', FromPort=80, ToPort=80)
 
 for i in range(9):
     if i < 4:
@@ -16,6 +25,7 @@ for i in range(9):
 
     #instanceType = 't2.micro'
     print("creating instance, type: " + instanceType + " no." + str(i))
+
     instance_ec2.run_instances(
         ImageId = imageId,
         MinCount = 1,
@@ -23,4 +33,4 @@ for i in range(9):
         InstanceType = instanceType,
         KeyName = keyName,
         UserData = initScript.replace('$INSTANCE_ID', str(i))
-        )
+    )

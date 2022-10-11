@@ -6,7 +6,9 @@ sudo apt install -y python3-venv
 su ubuntu
 cd /home/ubuntu
 mkdir flask_application && cd flask_application
-echo $INSTANCE_ID > id
+uuidgen > id
+echo >> id
+echo $_INSTANCE_TYPE >> id
 python3 -m venv venv
 source venv/bin/activate
 pip install Flask

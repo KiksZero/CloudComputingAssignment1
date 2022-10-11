@@ -4,4 +4,4 @@ f = open("id", "r")
 
 @app.route('/')
 def my_app():
-    return 'Welcome to Instance no.' + f.read()
+    return 'Welcome to Instance with id: ' + f.read()

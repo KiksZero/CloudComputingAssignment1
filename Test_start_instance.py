@@ -47,21 +47,13 @@ for i in range(9):
    #instanceType = 't2.micro'
    print("creating instance, type: " + instanceType + " no." + str(i))
 
-<<<<<<< HEAD
-   instance_ec2.run_instances(
-=======
    ec2_client.run_instances(
->>>>>>> 6a23a92063b378576c5a38f28313f0002f38c943
        ImageId = imageId,
        MinCount = 1,
        MaxCount = 1,
        InstanceType = instanceType,
        KeyName = keyName,
-<<<<<<< HEAD
       UserData = initScript.replace('$INSTANCE_ID', str(i))
-=======
-       UserData = initScript.replace('$INSTANCE_ID', str(i))
->>>>>>> 6a23a92063b378576c5a38f28313f0002f38c943
    )
 
 

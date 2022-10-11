@@ -99,3 +99,13 @@ Cluster2Listener = client.create_listener(
     Port=8081,
     Protocol='HTTP',
 )
+
+response = client.register_targets(
+    TargetGroupArn=Cluster1['TargetGroups'][0]['TargetGroupArn'],
+    Targets=cluster1Targets
+)
+
+response = client.register_targets(
+    TargetGroupArn=Cluster2['TargetGroups'][0]['TargetGroupArn'],
+    Targets=cluster2Targets
+)

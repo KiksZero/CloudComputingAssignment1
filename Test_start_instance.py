@@ -42,27 +42,27 @@ subnetB = ec2_client.create_subnet(
 
 # Create cluster 1 instances
 print("Creating instances for cluster 1, type: " + instanceTypeCluster1)
-instances = ec2_client.run_instances(
+instancesCluster1 = ec2_client.run_instances(
    ImageId = imageId,
    MinCount = instanceCountCluster1,
    MaxCount = instanceCountCluster1,
    InstanceType = instanceTypeCluster1,
    KeyName = keyName,
-   UserData = initScript.replace('$_INSTANCE_TYPE', instanceType)
+   UserData = initScript.replace('$_INSTANCE_TYPE', instanceTypeCluster1)
 )
-cluster1Targets = [{'Id': instance['InstanceId']} for instance in instances['Instances']]
+cluster1Targets = [{'Id': instance['InstanceId']} for instance in instancesCluster1['Instances']]
 
 # Create cluster 2 instances
 print("Creating instances for cluster 2, type: " + instanceTypeCluster2)
-instances = ec2_client.run_instances(
+instancesCluster2 = ec2_client.run_instances(
    ImageId = imageId,
    MinCount = instanceCountCluster2,
    MaxCount = instanceCountCluster2,
-   InstanceType = instanceType,
+   InstanceType = instanceTypeCluster2,
    KeyName = keyName,
-   UserData = initScript.replace('$_INSTANCE_TYPE', instanceType)
+   UserData = initScript.replace('$_INSTANCE_TYPE', instanceTypeCluster2)
 )
-cluster2Targets = [{'Id': instance['InstanceId']} for instance in instances['Instances']]
+cluster2Targets = [{'Id': instance['InstanceId']} for instance in instancesCluster2['Instances']]
 
 client = boto3.client('elbv2')
 Cluster1 = client.create_target_group( Name='Cluster1', Protocol='HTTP',  Port=8080, VpcId=vpc.id)

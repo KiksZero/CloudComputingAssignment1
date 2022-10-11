@@ -58,8 +58,8 @@ for i in range(9):
 
 
 client = boto3.client('elbv2')
-client.create_target_group( Name='Cluster1', Protocol='HTTP',  Port=80, VpcId=vpc.id)
-client.create_target_group( Name='Cluster2', Protocol='HTTP',  Port=80, VpcId=vpc.id)
+Cluster1 = client.create_target_group( Name='Cluster1', Protocol='HTTP',  Port=8080, VpcId=vpc.id)
+Cluster2 = client.create_target_group( Name='Cluster2', Protocol='HTTP',  Port=8081, VpcId=vpc.id)
 elb = client.create_load_balancer(
     Name='LoadBalancer1',
     Subnets=[
@@ -69,7 +69,26 @@ elb = client.create_load_balancer(
     SecurityGroups=[
         securitygroup.id,
     ],
-    
 )
-
-
+Cluster1Listener = client.create_listener(
+    DefaultActions=[
+        {
+            'TargetGroupArn': Cluster1['TargetGroups'][0]['TargetGroupArn'],
+            'Type': 'forward',
+        },
+    ],
+    LoadBalancerArn= elb['LoadBalancers'][0]['LoadBalancerArn'],
+    Port=8080,
+    Protocol='HTTP',
+)
+Cluster2Listener = client.create_listener(
+    DefaultActions=[
+        {
+            'TargetGroupArn': Cluster2['TargetGroups'][0]['TargetGroupArn'],
+            'Type': 'forward',
+        },
+    ],
+    LoadBalancerArn= elb['LoadBalancers'][0]['LoadBalancerArn'],
+    Port=8081,
+    Protocol='HTTP',
+)

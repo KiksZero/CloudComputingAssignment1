@@ -53,7 +53,7 @@ for i in range(9):
        MaxCount = 1,
        InstanceType = instanceType,
        KeyName = keyName,
-       UserData = initScript.replace('$INSTANCE_ID', str(i))
+      UserData = initScript.replace('$INSTANCE_ID', str(i))
    )
 
 

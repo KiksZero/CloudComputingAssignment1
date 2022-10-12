@@ -1,15 +1,13 @@
 #!/bin/bash
-
 sudo apt update -y
 sudo apt upgrade -y
 sudo apt install -y python3-venv
 su ubuntu
 cd /home/ubuntu
 mkdir flask_application && cd flask_application
-uuidgen > id
-echo >> id
-echo $_INSTANCE_TYPE >> id
-echo -n $_CLUSTER_URL > url
+uuidgen >id
+echo $_INSTANCE_TYPE >type
+echo -n $_CLUSTER_URL >url
 python3 -m venv venv
 source venv/bin/activate
 pip install Flask

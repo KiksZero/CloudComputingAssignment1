@@ -6,8 +6,10 @@ imageId = 'ami-08c40ec9ead489470'  # ubuntu 22.04
 keyName = 'vockey'
 instanceTypeCluster1 = 'm4.large'
 instanceCountCluster1 = 4
+urlCluster1 = '/cluster1'
 instanceTypeCluster2 = 't2.large'
 instanceCountCluster2 = 5
+urlCluster2 = '/cluster2'
 
 # ----------SCRIPT-----------------
 ec2_client = boto3.client("ec2")
@@ -21,6 +23,8 @@ vpc.wait_until_available()
 
 internetgateway = ec2_resource.create_internet_gateway()
 vpc.attach_internet_gateway(InternetGatewayId=internetgateway.id)
+routetable = vpc.create_route_table()
+route = routetable.create_route(DestinationCidrBlock='0.0.0.0/0', GatewayId=internetgateway.id)
 
 ec2_client.modify_vpc_attribute(VpcId=vpc.id, EnableDnsSupport={'Value': True})
 ec2_client.modify_vpc_attribute(VpcId=vpc.id, EnableDnsHostnames={'Value': True})
@@ -55,6 +59,8 @@ ec2_client.modify_subnet_attribute(
     },
     SubnetId = subnetB['Subnet']['SubnetId']
 )
+routetable.associate_with_subnet(SubnetId=subnetA['Subnet']['SubnetId'])
+routetable.associate_with_subnet(SubnetId=subnetB['Subnet']['SubnetId'])
 
 # Create cluster 1 instances
 print("Creating instances for cluster 1, type: " + instanceTypeCluster1)
@@ -72,7 +78,7 @@ instancesCluster1 = ec2_client.run_instances(
             'Groups': [securitygroup.id]
         }
     ],
-    UserData=initScript.replace('$_INSTANCE_TYPE', instanceTypeCluster1)
+    UserData=initScript.replace('$_INSTANCE_TYPE', instanceTypeCluster1).replace('$_CLUSTER_URL', urlCluster1)
 )
 cluster1Targets = [{'Id': instance['InstanceId']} for instance in instancesCluster1['Instances']]
 
@@ -92,13 +98,24 @@ instancesCluster2 = ec2_client.run_instances(
             'Groups': [securitygroup.id]
         }
     ],
-    UserData=initScript.replace('$_INSTANCE_TYPE', instanceTypeCluster2)
+    UserData=initScript.replace('$_INSTANCE_TYPE', instanceTypeCluster2).replace('$_CLUSTER_URL', urlCluster2)
 )
 cluster2Targets = [{'Id': instance['InstanceId']} for instance in instancesCluster2['Instances']]
 
 client = boto3.client('elbv2')
-Cluster1 = client.create_target_group(Name='Cluster1', Protocol='HTTP', Port=8080, VpcId=vpc.id)
-Cluster2 = client.create_target_group(Name='Cluster2', Protocol='HTTP', Port=8081, VpcId=vpc.id)
+Cluster1 = client.create_target_group(Name='Cluster1', Protocol='HTTP', Port=80, VpcId=vpc.id)
+client.modify_target_group(
+    TargetGroupArn=Cluster1['TargetGroups'][0]['TargetGroupArn'],
+    HealthCheckProtocol='HTTP',
+    HealthCheckPath=urlCluster1
+)
+Cluster2 = client.create_target_group(Name='Cluster2', Protocol='HTTP', Port=80, VpcId=vpc.id)
+client.modify_target_group(
+    TargetGroupArn=Cluster2['TargetGroups'][0]['TargetGroupArn'],
+    HealthCheckProtocol='HTTP',
+    HealthCheckPath=urlCluster2
+)
+
 elb = client.create_load_balancer(
     Name='LoadBalancer1',
     Subnets=[
@@ -117,19 +134,42 @@ Cluster1Listener = client.create_listener(
         },
     ],
     LoadBalancerArn=elb['LoadBalancers'][0]['LoadBalancerArn'],
-    Port=8080,
+    Port=80,
     Protocol='HTTP',
 )
-Cluster2Listener = client.create_listener(
-    DefaultActions=[
+
+client.create_rule(
+    ListenerArn=Cluster1Listener['Listeners'][0]['ListenerArn'],
+    Conditions=[
         {
-            'TargetGroupArn': Cluster2['TargetGroups'][0]['TargetGroupArn'],
-            'Type': 'forward',
-        },
+            'Field' : 'path-pattern',
+            'Values' : ['/cluster1']
+        }
     ],
-    LoadBalancerArn=elb['LoadBalancers'][0]['LoadBalancerArn'],
-    Port=8081,
-    Protocol='HTTP',
+    Priority=123,
+    Actions=[
+        {
+            'Type': 'forward',
+            'TargetGroupArn': Cluster1['TargetGroups'][0]['TargetGroupArn'],
+        }
+    ]
+)
+
+client.create_rule(
+    ListenerArn=Cluster1Listener['Listeners'][0]['ListenerArn'],
+    Conditions=[
+        {
+            'Field' : 'path-pattern',
+            'Values' : ['/cluster2']
+        }
+    ],
+    Priority=124,
+    Actions=[
+        {
+            'Type': 'forward',
+            'TargetGroupArn': Cluster2['TargetGroups'][0]['TargetGroupArn'],
+        }
+    ]
 )
 
 # Wait for all instances to get into "running" state

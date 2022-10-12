@@ -9,6 +9,7 @@ mkdir flask_application && cd flask_application
 uuidgen > id
 echo >> id
 echo $_INSTANCE_TYPE >> id
+echo -n $_CLUSTER_URL > url
 python3 -m venv venv
 source venv/bin/activate
 pip install Flask

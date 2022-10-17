@@ -17,7 +17,9 @@ availability_zone_id_subnet_a = 'use1-az2'
 availability_zone_id_subnet_b = 'use1-az4'
 cidr_block_subnet_a = '172.31.48.0/20'
 cidr_block_subnet_b = '172.31.16.0/20'
-number_of_get_requests = 200
+cluster_1_requests = 1000
+cluster_2_requests_before_timeout = 500
+cluster_2_requests_after_timeout = 1000
 
 # ----------SCRIPT-----------------
 ec2_client = boto3.client("ec2")
@@ -242,14 +244,25 @@ while healthy_count < 9:
 
 print('Hooray, all targets are healthy!')
 
-# sending n requests to both target groups
-print('Sending ' + str(number_of_get_requests) + ' requests to both target groups')
-for i in range(1,number_of_get_requests):
+# sending 1000 requests to cluster 1
+print('Sending ' + str(cluster_2_requests_before_timeout + cluster_2_requests_after_timeout) + ' requests to cluster 1')
+for i in range(1, cluster_1_requests):
     url =  'http://'+ elb['LoadBalancers'][0]['DNSName'] + '/cluster1'
-    url2 = 'http://'+ elb['LoadBalancers'][0]['DNSName'] + '/cluster2'
     headers = {'content-type': 'application/json'}
     r = requests.get(url, headers=headers)
+
+# sending 1500 requests to cluster 2 with 60s sleep
+print('Sending ' + str(cluster_2_requests_before_timeout + cluster_2_requests_after_timeout) + ' requests to cluster 2 with 60s sleep')
+for i in range(1,requests_before_timeout):
+    url2 = 'http://'+ elb['LoadBalancers'][0]['DNSName'] + '/cluster2'
+    headers = {'content-type': 'application/json'}
     r2 = requests.get(url2, headers=headers)
+time.sleep(60)
+for i in range(1,requests_after_timeout):
+    url2 = 'http://'+ elb['LoadBalancers'][0]['DNSName'] + '/cluster2'
+    headers = {'content-type': 'application/json'}
+    r2 = requests.get(url2, headers=headers)
+
 
 cloudwatch = boto3.client('cloudwatch')
 

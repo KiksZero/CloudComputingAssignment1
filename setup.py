@@ -1,6 +1,7 @@
 import boto3
 import time
 import requests
+import datetime
 
 # ---------SETTINGS----------------
 image_id = 'ami-08c40ec9ead489470'  # ubuntu 22.04
@@ -16,6 +17,7 @@ availability_zone_id_subnet_a = 'use1-az2'
 availability_zone_id_subnet_b = 'use1-az4'
 cidr_block_subnet_a = '172.31.48.0/20'
 cidr_block_subnet_b = '172.31.16.0/20'
+number_of_get_requests = 200
 
 # ----------SCRIPT-----------------
 ec2_client = boto3.client("ec2")
@@ -240,8 +242,9 @@ while healthy_count < 9:
 
 print('Hooray, all targets are healthy!')
 
-# sending 500 requests to both target groups
-for i in range(1,500):
+# sending n requests to both target groups
+print('Sending ' + str(number_of_get_requests) + ' requests to both target groups')
+for i in range(1,number_of_get_requests):
     url =  'http://'+ elb['LoadBalancers'][0]['DNSName'] + '/cluster1'
     url2 = 'http://'+ elb['LoadBalancers'][0]['DNSName'] + '/cluster2'
     headers = {'content-type': 'application/json'}
@@ -250,29 +253,62 @@ for i in range(1,500):
 
 cloudwatch = boto3.client('cloudwatch')
 
-response = cloudwatch.get_metric_data(
-    MetricDataQueries=[
-        {
-            'Id': 'testtesttest',
-            'MetricStat': {
-                'Metric': {
-                    'Namespace': 'Aws/ApplicationELB',
-                    'MetricName': 'RequestCount',
-                    'Dimensions': [
-                        {
-                            'Name': 'LoadBalancer',
-                            'Value': elb['LoadBalancers'][0]['LoadBalancerArn'].split(':')[-1]
+# get metrics for each instance for cluster 1
+metrics = ['CPUUtilization', 'NetworkIn', 'NetworkOut']
+for instance in targets_cluster_1:
+    for metric in metrics:
+        response = cloudwatch.get_metric_data(
+            MetricDataQueries=[
+                {
+                    'Id': 'test2',
+                    'MetricStat': {
+                        'Metric': {
+                            'Namespace': 'AWS/EC2',
+                            'MetricName': metric,
+                            'Dimensions': [
+                                {
+                                    'Name': 'InstanceId',
+                                    'Value': instance['Id']
+                                },
+                            ]
                         },
-                    ]
+                        'Period': 60,
+                        'Stat': 'Average'
+                    },
                 },
-                'Period': 300,
-                'Stat': 'Sum',
-                'Unit': 'Count'
-            },
-        },
-    ],
-    StartTime=datetime.datetime.utcnow() - timedelta(days=2),
-    EndTime=datetime.datetime.utcnow(),
-)
+            ],
+            StartTime=datetime.datetime.utcnow() - datetime.timedelta(days=1),
+            EndTime=datetime.datetime.utcnow(),
+        )
+        print(metric, instance['Id'])
+        print(response['MetricDataResults'][0]['Values'])
 
-print(response)
+# get metrics for each instance for cluster 2
+metrics = ['CPUUtilization', 'NetworkIn', 'NetworkOut']
+for instance in targets_cluster_2:
+    for metric in metrics:
+        response = cloudwatch.get_metric_data(
+            MetricDataQueries=[
+                {
+                    'Id': 'test2',
+                    'MetricStat': {
+                        'Metric': {
+                            'Namespace': 'AWS/EC2',
+                            'MetricName': metric,
+                            'Dimensions': [
+                                {
+                                    'Name': 'InstanceId',
+                                    'Value': instance['Id']
+                                },
+                            ]
+                        },
+                        'Period': 60,
+                        'Stat': 'Average'
+                    },
+                },
+            ],
+            StartTime=datetime.datetime.utcnow() - datetime.timedelta(days=1),
+            EndTime=datetime.datetime.utcnow(),
+        )
+        print(metric, instance['Id'])
+        print(response['MetricDataResults'][0]['Values'])

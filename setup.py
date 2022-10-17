@@ -1,5 +1,6 @@
 import boto3
 import time
+import requests
 
 # ---------SETTINGS----------------
 image_id = 'ami-08c40ec9ead489470'  # ubuntu 22.04
@@ -215,3 +216,14 @@ elbv2_client.register_targets(
 )
 
 print('DONE!')
+
+def call_endpoint_http():
+    url = 'http://LoadBalancer1-519107872.us-east-1.elb.amazonaws.com/cluster1'
+    url2 = 'http://LoadBalancer1-519107872.us-east-1.elb.amazonaws.com/cluster2'
+    headers = {'content-type': 'application/json'}
+    r = requests.get(url, headers=headers)
+    r2 = requests.get(url2, headers=headers)
+    print(r.status_code)
+    print(r.json())
+    print(r2.status_code)
+    print(r2.json())

@@ -217,16 +217,36 @@ elbv2_client.register_targets(
 
 print('DONE!')
 
-def call_endpoint_http():
-    url = 'http://LoadBalancer1-519107872.us-east-1.elb.amazonaws.com/cluster1'
-    url2 = 'http://LoadBalancer1-519107872.us-east-1.elb.amazonaws.com/cluster2'
+# Waiting for all targets to get into "healthy" state
+print('Waiting for targets to get into healthy state...')
+healthy_count = 0
+while healthy_count < 9:
+    healthy_count = 0
+    cluster_1_health = elbv2_client.describe_target_health(
+        TargetGroupArn=cluster_1['TargetGroups'][0]['TargetGroupArn'],
+        Targets=targets_cluster_1
+    )
+    for target in cluster_1_health['TargetHealthDescriptions']:
+        if target['TargetHealth']['State'] == 'healthy':
+            healthy_count += 1
+    cluster_2_health = elbv2_client.describe_target_health(
+        TargetGroupArn=cluster_2['TargetGroups'][0]['TargetGroupArn'],
+        Targets=targets_cluster_2
+    )
+    for target in cluster_2_health['TargetHealthDescriptions']:
+        if target['TargetHealth']['State'] == 'healthy':
+            healthy_count += 1
+    time.sleep(5)
+
+print('Hooray, all targets are healthy!')
+
+# sending 500 requests to both target groups
+for i in range(1,500):
+    url =  'http://'+ elb['LoadBalancers'][0]['DNSName'] + '/cluster1'
+    url2 = 'http://'+ elb['LoadBalancers'][0]['DNSName'] + '/cluster2'
     headers = {'content-type': 'application/json'}
     r = requests.get(url, headers=headers)
     r2 = requests.get(url2, headers=headers)
-    print(r.status_code)
-    print(r.json())
-    print(r2.status_code)
-    print(r2.json())
 
 cloudwatch = boto3.client('cloudwatch')
 

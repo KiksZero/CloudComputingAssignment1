@@ -227,3 +227,32 @@ def call_endpoint_http():
     print(r.json())
     print(r2.status_code)
     print(r2.json())
+
+cloudwatch = boto3.client('cloudwatch')
+
+response = cloudwatch.get_metric_data(
+    MetricDataQueries=[
+        {
+            'Id': 'testtesttest',
+            'MetricStat': {
+                'Metric': {
+                    'Namespace': 'Aws/ApplicationELB',
+                    'MetricName': 'RequestCount',
+                    'Dimensions': [
+                        {
+                            'Name': 'LoadBalancer',
+                            'Value': elb['LoadBalancers'][0]['LoadBalancerArn'].split(':')[-1]
+                        },
+                    ]
+                },
+                'Period': 300,
+                'Stat': 'Sum',
+                'Unit': 'Count'
+            },
+        },
+    ],
+    StartTime=datetime.datetime.utcnow() - timedelta(days=2),
+    EndTime=datetime.datetime.utcnow(),
+)
+
+print(response)

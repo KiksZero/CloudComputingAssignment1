@@ -295,7 +295,6 @@ for instance in targets_cluster_1:
             StartTime=datetime.datetime.utcnow() - datetime.timedelta(days=1),
             EndTime=datetime.datetime.utcnow(),
         )
-        print(metric['Name'], instance['Id'] + ' : ')
         print('The average for metric ' + metric['Name'] + ' of instance with id ' + instance['Id'] + ' is ' + str(sum(
             response['MetricDataResults'][0]['Values']) / len(response['MetricDataResults'][0]['Values'])) + ' ' + metric['Unit'])
 
@@ -326,7 +325,6 @@ for instance in targets_cluster_2:
             StartTime=datetime.datetime.utcnow() - datetime.timedelta(days=1),
             EndTime=datetime.datetime.utcnow(),
         )
-        print(metric['Name'], instance['Id'])
         print('The average for metric ' + metric['Name'] + ' of instance with id ' + instance['Id'] + ' is ' + str(sum(
             response['MetricDataResults'][0]['Values']) / len(response['MetricDataResults'][0]['Values'])) + ' ' +
               metric['Unit'])
